@@ -42,49 +42,73 @@ def reallocation():
             # Memory[address + 3] = "free"
             # Memory[address + 4] = Dealloc_Process_EndAdd
 
+
 # ** memory size ** #
-Memory_Size = input("Please enter your memory's size")
+Memory_Size = input("Please enter your memory's size\n")
 Memory_Size = int(Memory_Size)
 
 # ** Free Table Creation ** #
 Holes_Number = input("How many holes do you have? \n")
 Holes_Number = int(Holes_Number)
-print("""Enter name and size of your processes:
+print("""Enter data of your holes:
 Starting_Address  Size_of_the_hole""")
 # ^ Base register   ^ limit register
 
 Free_Table = [[0 for x in range(2)] for y in range(Holes_Number)]
 #                               ^ no of cols       ^ no of rows
-for i in range(Holes_Number):
-    Memory_Size_Flag = 1
-    while Memory_Size_Flag == 1:    # Loop made to take values only inside the memory size declared
-        total = input()
-        base, limit = total.split()
-        base = int(base)
-        limit = int(limit)
-        Free_Table[i][0] = base
-        Free_Table[i][1] = limit
-        if Free_Table[i][0] + Free_Table[i][1] > Memory_Size:
-            print("invalid address space, please re-enter the last value to be within your memory range!")
-        else:
-            Memory_Size_Flag == 0
+count = 0
+while count != Holes_Number-1:
+    # Loop made to take values only inside the memory size declared
+    # overlap detection >> not implemented till now >> in memory before allocation
+    total = input()
+    base, limit = total.split()
+    base = int(base)
+    limit = int(limit)
+    if base + limit > Memory_Size:
+        print("invalid address space, please re-enter the last value to be within your memory range!")
+    else:
+        Free_Table[count][0] = base
+        Free_Table[count][1] = limit
+        count += 1
+
 # sort the Free_Table with starting address
 Free_Table.sort(key=lambda x: x[0])
-# print (Free_Table)
+i = 0
+count = Holes_Number
+while i != count-1:
+    # To handle the overlapping problem
+    if Free_Table[i][0] + Free_Table[i][1] > Free_Table[i + 1][0]:
+        print("Due to entry number: ", i+2, " : ", Free_Table[i + 1][0], " ", Free_Table[i + 1][1], "\n",
+              "The program won't work so it will be removed.")
+        del Free_Table[i + 1]
+        count -= 1
+    i += 1
+
+print("your entry is:", Free_Table)
 
 # ** Memory before allocation ** #
 Memory = list()
 Memory.append(0)
-memory_sum = 0
-for i in range (Holes_Number):
-    memory_sum += Free_Table[i][0]
+for i in range(Holes_Number):
+    print(i)
     # if (memory_sum + Free_Table[i][1]) < Memory_Size:
-    if Free_Table[i][0] != 0:
+    if (Free_Table[i][0] == 0) and (i == 0):
+        # first hole in memory is not at zero >> normally "OS place"
+        Memory.append("Free")
+        Memory.append(Free_Table[i][0] + Free_Table[i][1])
+    elif (i > 0) and (Free_Table[i - 1][0] + Free_Table[i - 1][1] == Free_Table[i][0]):
+        # not first hole but the last value "hole" ends exactly at the start of the this hole
+        index = Memory.index(Free_Table[i - 1][0] + Free_Table[i - 1][1])
+        Memory[index] = Free_Table[i][0] + Free_Table[i][1]
+    else:
         Memory.append("Full")
-    Memory.append(memory_sum)
-    Memory.append("Free")
-    Memory.append(memory_sum + Free_Table[i][1])
+        Memory.append(Free_Table[i][0])
+        Memory.append("Free")
+        Memory.append(Free_Table[i][0] + Free_Table[i][1])
 
+# Nemory before any allocation
+print("memory before any allocation: ")
+print(Memory)
 
 # ** Choose the Algorithim ** #
 Algorithim = input(""" Please choose your algorithim:
@@ -94,8 +118,8 @@ Algorithim = input(""" Please choose your algorithim:
 Algorithim = int(Algorithim)
 # ** Number of processes and Process_Table ** #
 Process_Number = input("How many processes do you have? \n")
-Process_Number = int (Process_Number)
-print ("""Enter name and size of your processes:
+Process_Number = int(Process_Number)
+print("""Enter name and size of your processes:
 Name  Size
 Example:
 Process1  100""")
@@ -108,7 +132,6 @@ for i in range(Process_Number):
     limit = int(limit)
     processes[i][0] = name
     processes[i][1] = limit
-
 
 # This code is for entering a process "allocation" >> needs some adjustments to fit!
 # memory_sum >> start value then end value of the current adress ^_^
@@ -149,5 +172,6 @@ elif (memory_sum + Free_Table[i][1]) > Memory_Size:
 
 
 # ** Print the different cases of the memory after each input
+# first memory case
 
 # ** Consider de-allocation in the code later + merging the spaces ** #
