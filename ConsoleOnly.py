@@ -8,41 +8,6 @@ Created on Mon Apr  9 11:46:32 2018
 @About: Implement Contiguous Allocation in memory, on console
         first fit - best fit allgorithim
 """
-
-
-def reallocation():
-    flag = 0
-    while flag == 0:
-        print("Do you need to de-allocate any process in your memory ?")
-        print(Memory)
-        reallocate_descision = input("""1 : Yes
-        2 : No""")
-        reallocate_descision = int(reallocate_descision)
-        if reallocate_descision == 0:
-            pass
-        elif reallocate_descision == 1:
-            flag = 1
-            process_size = Free_Table[i][1] - memory_sum  # (end adress - start address) of deallocated process
-            while flag == 1:
-                print("Choose enter the starting address of the block you want to deallocate (bigger size or equal):")
-                print(Memory)
-                reallocate_address = input()
-                reallocate_address = int(reallocate_address)
-                if (Memory[address + 2] - Memory[address]) < process_size:
-                    print("wrong entry, choose again please")
-                else:
-                    flag = 0
-            address = Memory.index(reallocate_address)  # TBChecked
-            Memory[address + 1] = "Full"
-            dealloc_process_end_address = Memory[address + 2]  # end adress of deallocated process
-            Memory[address + 2] = int(Memory[address + 2]) - process_size
-            # overrides !!! we need to create new places here
-            Memory.insert(address + 3, "free")
-            Memory.insert(address + 4, dealloc_process_end_address)
-            # Memory[address + 3] = "free"
-            # Memory[address + 4] = Dealloc_Process_EndAdd
-
-
 # ** memory size ** #
 Memory_Size = input("Please enter your memory's size\n")
 Memory_Size = int(Memory_Size)
@@ -56,8 +21,8 @@ Starting_Address  Size_of_the_hole""")
 
 Free_Table = [[0 for x in range(2)] for y in range(Holes_Number)]
 #                               ^ no of cols       ^ no of rows
-count = 0
-while count != Holes_Number-1:
+i = 0
+while i != Holes_Number-1:
     # Loop made to take values only inside the memory size declared
     # overlap detection >> not implemented till now >> in memory before allocation
     total = input()
@@ -67,21 +32,22 @@ while count != Holes_Number-1:
     if base + limit > Memory_Size:
         print("invalid address space, please re-enter the last value to be within your memory range!")
     else:
-        Free_Table[count][0] = base
-        Free_Table[count][1] = limit
-        count += 1
+        Free_Table[i][0] = base
+        Free_Table[i][1] = limit
+        i += 1
 
 # sort the Free_Table with starting address
 Free_Table.sort(key=lambda x: x[0])
 i = 0
-count = Holes_Number
-while i != count-1:
+# i = Holes_Number          ???
+# while i != i-1:           ???
+while i != Holes_Number:
     # To handle the overlapping problem
     if Free_Table[i][0] + Free_Table[i][1] > Free_Table[i + 1][0]:
         print("Due to entry number: ", i+2, " : ", Free_Table[i + 1][0], " ", Free_Table[i + 1][1], "\n",
               "The program won't work so it will be removed.")
         del Free_Table[i + 1]
-        count -= 1
+        i -= 1
     i += 1
 
 print("your entry is:", Free_Table)
@@ -106,10 +72,6 @@ for i in range(Holes_Number):
         Memory.append("Free")
         Memory.append(Free_Table[i][0] + Free_Table[i][1])
 
-# Nemory before any allocation
-print("memory before any allocation: ")
-print(Memory)
-
 # ** Choose the Algorithim ** #
 Algorithim = input(""" Please choose your algorithim:
 1: First Fit
@@ -133,45 +95,121 @@ for i in range(Process_Number):
     processes[i][0] = name
     processes[i][1] = limit
 
-# This code is for entering a process "allocation" >> needs some adjustments to fit!
-# memory_sum >> start value then end value of the current adress ^_^
-'''
-elif (memory_sum + Free_Table[i][1]) > Memory_Size:
-    # message saying this process waits or cant be allocated and offer me to deallocate .. but after deallocation
-    # I will have to enter it again to allocate it
-    print("""The process can't be allocated, please deallocate some processes and enter this process again
-    1 : Yes
-    2 : No
-    """)
-    reallocateDescision = input()
-    reallocateDescision = int(reallocateDescision)
-    if reallocateDescision == 0:
-        break
-    elif reallocateDescision == 1:
-        flag = 1
-        Process_Size = Free_Table[i][1] - memory_sum  #  (end adress - start address) of deallocated process
-        while flag == 1:
-            print("Choose enter the starting address of the block you want to deallocate (bigger size or equal):")
-            print (Memory)
-            reallocateAddress = input()
-            reallocateAddress = int(reallocateAddress)
-            if (Memory[Address + 2] - Memory[Address]) < Process_Size:
-                print("wrong entry, choose again please")
-            else:
-                flag = 0
-        Address = Memory.index(reallocateAddress)  # TBChecked
-        Memory[Address + 1] = "Full"
-        Dealloc_Process_EndAddress = Memory[Address + 2]  # end adress of deallocated process
-        Memory[Address + 2] = int (Memory[Address + 2]) - Process_Size
-        # overrides !!! we need to create new places here
-        Memory.insert(Address + 3, "free")
-        Memory.insert(Address + 4, Dealloc_Process_EndAddress)
-        # Memory[Address + 3] = "free"
-        # Memory[Address + 4] = Dealloc_Process_EndAdd
-    '''
-
 
 # ** Print the different cases of the memory after each input
+# Memory before any allocation
+print("memory before any allocation: ")
+print(Memory)
 # first memory case
+i = 0
+# when i increments >> one process allocated in memory.
+# when i doesn't incement >> reallocation occured > repeat / or ignore this process: too big
+while i != Process_Number:
+    # Get all indices of holes in memory each iteration "Can change"
+    Deallocate_flag = 1
+    free_indices = [j for j, x in enumerate(Memory) if x == "Free"]
+    # get all sizes of holes
+    holes_sizes = []
+    for j in free_indices:
+        hole_size = Memory[j + 1] - Memory[j - 1]
+        holes_sizes.append(hole_size)
+    if Algorithim == 1:
+        # First Fit Algorithim
+        for j in free_indices:
+            # Most of the times: we get j only once >> break @ case1 / 2
+            hole_size = Memory[j+1] - Memory[j-1]
+            if processes[i][1] < hole_size:
+                Memory[j] = processes[i][0]     # this free space > process name
+                process_limit = processes[i][1] + Memory[j-1]   # end address of the process in memory
+                Memory.insert(j+1, process_limit)   # j: process_name  >  process_limit > hole_limit
+                Memory.insert(j+2, "Free")  # j: process_name  >  process_limit > Free > hole_limit
+                Deallocate_flag = 0
+                i += 1
+                break
+            elif processes[i][1] == hole_size:
+                Memory[j] = processes[i][0]
+                Deallocate_flag = 0
+                i += 1
+                break
+            elif processes[i][1] > hole_size:
+                Deallocate_flag = 1
+                # continue to other indices
 
-# ** Consider de-allocation in the code later + merging the spaces ** #
+        # if the loop ends + Deallocate_flag == 1 >>> no room for this process & we need to deallocate a process
+        if Deallocate_flag == 1:
+            if free_indices.index(j) == 0:
+                # first process is too big and can't replace with other processes "no other processes"
+                print("This process ", processes[i][0], " can't be stored in memory\n")
+                print("There are no other processes to deallocate so OS will ignore this process\n")
+                i += 1
+
+            else:
+                # reallocating
+                print("This process with size ", processes[i][1], "has no space in memory\n")
+                print(Memory, "\n")
+                bad_entry = 1   # not a valid address
+                while bad_entry:
+                    Deallocate_process_start = input("Please deallocate a process from memory shown"
+                                                     " by entering the starting address of the process: ")
+                    Deallocate_process_start = int(Deallocate_process_start)
+                    address = Memory.index(Deallocate_process_start)
+                    try:
+                        if (Memory[address+1] == "Free") or (Memory[address+1] == "Full"):
+                            bad_entry = 1
+                            print("Not a process address, please re-enter your address\n")
+                            i += 0
+                        else:
+                            Memory[address+1] = "Free"
+                            bad_entry = 0
+                            i += 1
+                    except:
+                        bad_entry = 1
+                        print("Invalid address, please re-enter your address\n")
+                        i += 0
+
+    elif Algorithim == 2:
+        # Best Fit Algorithm
+        Best_fit = min(holes_sizes)
+        max_hole_size = max(holes_sizes)
+        no_holes = holes_sizes.__len__()
+        while processes[i][1] > Best_fit:
+            # process size bigger than min value
+            # make the min value maximum & get the next lowest value .. etc.
+            holes_sizes[holes_sizes.index(min(holes_sizes))] = max(holes_sizes) + 1
+            Best_fit = min(holes_sizes)
+            no_holes -= 1
+            if no_holes == -1:
+                # to stop inifinte loop @ case1: no space in the holes in smaller than the process
+                break
+        if Best_fit == max_hole_size:
+            # this means either:
+            # case1: no space in the holes in smaller than the process
+            if no_holes == -1:
+                print("This process with size ", processes[i][1], "has no space in memory\n")
+                print(Memory, "\n")
+                bad_entry = 1  # not a valid address
+                while bad_entry:
+                    Deallocate_process_start = input("Please deallocate a process from memory shown"
+                                                     " by entering the starting address of the process: ")
+                    Deallocate_process_start = int(Deallocate_process_start)
+                    address = Memory.index(Deallocate_process_start)
+                    try:
+                        if (Memory[address + 1] == "Free") or (Memory[address + 1] == "Full"):
+                            # tried to de-allocate a hole or an allocated place which is not a process
+                            bad_entry = 1
+                            print("Not a process address, please re-enter your address\n")
+                            i += 0
+                        else:
+                            Memory[address + 1] = "Free"
+                            bad_entry = 0
+                            i += 1
+                    except:
+                        bad_entry = 1
+                        print("Invalid address, please re-enter your address\n")
+                        i += 0
+
+            # case2: the biggest place took the size
+            elif no_holes >= 0:
+                # do nothing
+                pass
+
