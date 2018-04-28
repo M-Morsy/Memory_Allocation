@@ -139,7 +139,7 @@ while i != Process_Number:
 
         # if the loop ends + Deallocate_flag == 1 >>> no room for this process & we need to deallocate a process
         if Deallocate_flag == 1:
-            if i == 0:
+            if i == 0 or processes[i][1] > max(holes_sizes):
                 # first process is too big and can't replace with other processes "no other processes"
                 print("This process ", processes[i][0], " can't be stored in memory\n")
                 print("There are no other processes to deallocate so OS will ignore this process", processes[i][0],
@@ -169,7 +169,7 @@ while i != Process_Number:
                         bad_entry = 1
                         print("Invalid address, please re-enter your address\n")
                         i += 0
-        print(Memory)
+        # print(Memory)
 
     elif Algorithim == 2:
         # Best Fit Algorithm
