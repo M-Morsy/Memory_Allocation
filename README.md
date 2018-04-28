@@ -6,5 +6,5 @@ Designed to cover contiguous memory allocation with two algorithims:
 2. Best Fit
 
 ## GUI
-Used PyQt5 to design the GUI
+Used PyQt5 to design the GUI  
 *TBC*
